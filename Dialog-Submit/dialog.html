@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include_('dialog.css') ?>
+  </head>
+  <body>
+
+    <div class="container">
+    <form id="form"> 
+
+      <div class="section">
+        <h4>Dialog</h4>
+
+        <div class="input-field">
+            <input type="text" id="text" name="text"/>
+        </div>
+       </div>  
+
+      <div id="button" class="section">        
+        <div class="input-field">    
+            <button 
+              id="submit-button" 
+              name="submit-button" 
+              type="submit" 
+              class="waves-effect waves-light btn">
+              <i class="material-icons right">send</i>Submit
+          </button>                                  
+        </div>
+      </div>     
+
+      <div id="preloader" class="section">
+        <div class="preloader-wrapper small active">
+          <div class="spinner-layer spinner-green-only">
+            <div class="circle-clipper left">
+              <div class="circle"></div>
+            </div>
+            <div class="gap-patch">
+              <div class="circle"></div>
+            </div>
+            <div class="circle-clipper right">
+              <div class="circle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="status" class="section">
+        <h4 id="status-message" hidden></h4>
+      </div>
+
+    </form>
+    </div>
+
+    <?!= include_('dialog.js') ?>
+  </body>
+</html>
