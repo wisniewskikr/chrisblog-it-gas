@@ -3,8 +3,5 @@ function onOpen() {
 }
 
 function myFunction() {
-
-  var spreadsheet = SpreadsheetApp.getActive();
-  spreadsheet.getRange('A1').setValue('Hello World');  
-
+  Browser.msgBox("Trigger - onOpen()");  
 }
