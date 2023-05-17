@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include_('dialog.css') ?>
+  </head>
+  <body>
+
+    <div class="container">
+
+      <div class="section">
+        <h4>Dialog</h4>
+        <div class="input-field">
+            <div id="message">Data is loading. Please wait...</div>
+        </div>
+      </div>
+
+      <div id="preloader" class="section">
+        <div class="preloader-wrapper small active">
+          <div class="spinner-layer spinner-green-only">
+            <div class="circle-clipper left">
+              <div class="circle"></div>
+            </div>
+            <div class="gap-patch">
+              <div class="circle"></div>
+            </div>
+            <div class="circle-clipper right">
+              <div class="circle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="status" class="section error" hidden>
+        <h4 id="status-message"></h4>
+      </div>
+
+    </div>
+
+    <?!= include_('dialog.js') ?>
+  </body>
+</html>
