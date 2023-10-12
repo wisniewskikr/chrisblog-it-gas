@@ -9,10 +9,10 @@ DESCRIPTION
 -----------
 
 ##### Goal
-The goal of this project is to show how to create Simple Trigger which is defined in a code.
+The goal of this project is to show how to create Simple Trigger which is defined in an editor. This editor enables trigger configuration.
 
 ##### Details
-When user refreshes Gsheet then Simple Trigger defined in a code should be started.
+When user refreshes Gsheet then Simple Trigger defined in an editor should be started.
 
 ##### Result 
 After refresh Gsheet a dialog with message should be displayed by Simple Trigger.
