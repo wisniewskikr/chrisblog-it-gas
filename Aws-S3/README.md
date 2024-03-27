@@ -27,7 +27,10 @@ IMPLEMENTATION
 --------------
 
 Implementation details:
-* In file "functions.gs" create all functions.
+* Set up S3 bucket **wisniewskikr-demo** and upload there some test file **demo.csv**. How to do it you have described here: https://docs.google.com/document/d/1MgS-062m6b3OUuYI2c-niROBXruL_dHpeSmmbwadJ40/edit#heading=h.x5ouo7urv8d
+* Set up IAM user **demo-s3-user** and update this user's **accessKeyAWS** and **secretKeyAWS** in application. How to do it you have described here: https://docs.google.com/document/d/1MgS-062m6b3OUuYI2c-niROBXruL_dHpeSmmbwadJ40/edit#heading=h.x5ouo7urv8d
+* Create some test file to upload in location **C://tmp/demo.txt**
+* (Optional) Add **S3** library using following script id: **1Qx-smYQLJ2B6ae7Pncbf_8QdFaNm0f-br4pbDg0DXsJ9mZJPdFcIEkw_**
   
 
 LAUNCH
