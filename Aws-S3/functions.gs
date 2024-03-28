@@ -4,8 +4,9 @@ var secretKeyAWS = "";
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('S3 Functions')
-    .addItem('Import Data from S3', 'importS3')
-    .addItem('Export Data to S3', 'exportS3') 
+    .addItem('Import File from S3', 'importS3')
+    .addItem('Export File to S3', 'exportS3')
+    .addItem('Export Gsheet Tab to S3', 'exportS3Tab')  
     .addItem('Create Bucket "wisniewskikr-tmp"', 'createBucket')
     .addItem('Delete Bucket "wisniewskikr-tmp"', 'deleteBucket')   
     .addItem('Create Folder "tmp" with file', 'createFolder')
@@ -27,6 +28,27 @@ function exportS3() {
 
   var s3 = S3.getInstance(accessKeyAWS, secretKeyAWS);
   s3.putObject("wisniewskikr-demo", "tmp/demo.txt", "Hello World", {logRequests:true});
+
+  var ui = SpreadsheetApp.getUi();
+  ui.alert("Data was exported");
+
+}
+
+function exportS3Tab() {
+
+  var fileName = "demo"
+
+  var s3 = S3.getInstance(accessKeyAWS, secretKeyAWS);
+
+  var csv = SpreadsheetApp
+  .getActiveSpreadsheet()
+  .getDataRange()
+  .getValues()  //  or .getDisplayValues()
+  .map(r => r.join(","))
+  .join("\n");
+  var blob = Utilities.newBlob(csv, MimeType.CSV, fileName + ".csv");
+ 
+  s3.putObject("wisniewskikr-demo", fileName, blob, {logRequests:true});
 
   var ui = SpreadsheetApp.getUi();
   ui.alert("Data was exported");
