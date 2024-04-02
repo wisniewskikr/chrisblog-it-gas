@@ -1,0 +1,218 @@
+<script
+  src="https://code.jquery.com/jquery-3.5.1.min.js"
+  integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+  crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+      crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/jQuery-QueryBuilder/dist/js/query-builder.standalone.min.js"></script>
+
+<script>
+
+  var rowsCount;
+  var exportSizePackage;
+  var threadsCountPerEnvExport;
+  var tab;
+
+  var progressArray;
+  var indexHuge;
+  var multithreadError;
+
+  $(document).ready(function() {
+    startLoad('Dialog is loaded.');
+    onInitExportDialog();
+    $('#form').submit(onFormSubmit);
+  })
+
+  function onInitExportDialog() {
+
+    google.script.run
+      .withSuccessHandler(function(response) {
+
+        var responseObj = JSON.parse(response);
+        rowsCount = responseObj.rowsCount;
+        exportSizePackage = responseObj.exportSizePackage;
+        threadsCountPerEnvExport = responseObj.threadsCountPerEnvExport;
+        tab = responseObj.tab;
+        stopLoad();  
+             
+      })
+      .withFailureHandler(function(error) {
+        handleError(error);
+      })
+      .callLibraryFunction("onInitDialog_", null);
+
+  }   
+
+  function onFormSubmit() {
+    
+    startLoad('Data is exported.');
+    handlePackagesMultithread(null, null); 
+
+  }
+
+  function handlePackagesMultithread(database, selectedColumnTypes) {
+
+    var arrayRowsPerThread = getPackagesCountArray(rowsCount, exportSizePackage);	
+    initProgressArray(arrayRowsPerThread.length);	
+    
+    progressSectionShow(`Export from tab: ${tab}. Packages are preparing. Total rows count: ${rowsCount - 1}. Progress: 0/${progressArray.length}`);
+
+    var threadsCount = (arrayRowsPerThread.length <= threadsCountPerEnvExport * 2) ? arrayRowsPerThread.length : threadsCountPerEnvExport * 2;
+
+    for (let index = 0; index < threadsCount; index++) {
+      indexHuge = index;
+      onSubmitPackagesMultithreadExport(database, selectedColumnTypes, indexHuge, arrayRowsPerThread);
+    }
+
+  }
+
+  function onSubmitPackagesMultithreadExport(database, selectedColumnTypes, index, arrayRowsPerThread) {
+
+		var startIndex = (index == 0) ? 2 : arrayRowsPerThread.slice(0, index).reduce((a,b)=>a+b,2);
+		var stopIndex = startIndex + arrayRowsPerThread[index] - 1;
+
+		google.script.run
+		.withSuccessHandler(function(response) {
+			indexHuge++
+
+			if (multithreadError != null) {
+				return;
+			}
+
+			progressArray[index] = false;
+      var finished = progressFinishedCount();
+			progressSectionShow(`Export from tab: ${tab}. Packages are preparing. Total rows count: ${rowsCount -1}. Progress: ${finished}/${progressArray.length}`);
+
+			if (finished == progressArray.length) {
+				google.script.host.close();
+			}
+
+			if (indexHuge < progressArray.length) {
+				onSubmitPackagesMultithreadExport(database, selectedColumnTypes, indexHuge, arrayRowsPerThread);
+			}
+
+		})
+		.withFailureHandler(function(error) {
+			handleError(error);
+		})
+		.callLibraryFunction("onSubmitPackagesMultithreadExport", [database, selectedColumnTypes, startIndex, stopIndex, tab, index]);
+
+	}
+
+  // ***** HELP METHODS ***** //
+
+  function handleError(error) {
+
+    $('#message').hide();
+    $('#preloader').hide();
+    $('#status-message').addClass('error')
+    $('#status-message').text(error)
+    $('#status-message').show()
+    $('#status').show();
+
+  }
+
+  function startLoad(message) {
+    $('#button').hide();
+    $('#status').hide();
+    progressSectionShow(message);
+  }
+
+  function stopLoad() {
+    $('#button').show();
+    progressSectionHide();
+  }
+
+  function progressSectionShow(message) {
+	  $('#progress-message').text(message);
+	  $('#progress-section').show();
+  }
+
+  function progressSectionHide() {
+	  $('#progress-section').hide();
+  }
+
+  function getPackagesCountArray(rowsCount, rowsSize) {
+
+		const num = rowsCount - 1;
+
+		if (num <= rowsSize) {
+			return getPackagesCountArraySmall();
+		} else {
+			return getPackagesCountArrayBig(rowsCount, rowsSize);
+		}
+
+	}
+
+	function getPackagesCountArraySmall() {
+
+		const num = rowsCount - 1;
+		const parts = threadsCountPerEnvExport * 2;
+
+		if (num <= (parts * 3)) {
+      		return [num];
+    	}
+
+		const splitNumber = (num = 1, parts = 1) => {
+			let n = Math.floor(num / parts);
+			const arr = [];
+			for (let i = 0; i < parts; i++){
+				arr.push(n)
+			};
+			if(arr.reduce((a, b)=> a + b,0) === num){
+				return arr;
+			};
+			for(let i = 0; i < parts; i++){
+				arr[i]++;
+				if(arr.reduce((a, b) => a + b, 0) === num){
+					return arr;
+				};
+			};
+		};
+
+		return splitNumber(num, parts);
+
+	}
+
+	function getPackagesCountArrayBig(rowsCount, rowsSize) {
+
+		let array = [];
+		const exportRowsCount = rowsCount - 1;
+
+		if (exportRowsCount == rowsSize) {
+			array.push(exportRowsCount);
+			return array;
+		}
+
+		let division = Math.floor(exportRowsCount / rowsSize);
+		if (division == 0) {
+			array.push(exportRowsCount);
+			return array;
+		}
+
+		const reminder = exportRowsCount % rowsSize;
+		if ( reminder > 0) {
+			division++
+		}
+
+		array = Array(division).fill(rowsSize);
+		array[array.length - 1] = reminder
+
+		return array;
+
+	}
+
+  function initProgressArray(progressCount) {
+	  progressArray = Array(progressCount).fill(true);
+	}
+
+  function progressFinishedCount() {
+		var array = progressArray.filter(value => value == false);
+		return array.length;
+	}
+
+</script>
