@@ -66,8 +66,11 @@ function onSubmitPackagesMultithreadExport(database, selectedColumnTypes, startI
 
 function onSubmitPackagesMultithreadCopy(database, selectedColumnTypes, startIndex, stopIndex, tab, index) {
 
-  var sql = "COPY demo FROM 's3://wisniewskikr-demo/demo_" + index + "' iam_role 'arn:<arn>/aws-from-s3-to-redshift' ignoreheader 1 delimiter ',';"
+  var sql = "COPY demo FROM 's3://wisniewskikr-demo/demo_" + index + "' iam_role 'arn:aws:iam::381196861170:role/aws-from-s3-to-redshift' ignoreheader 1 delimiter ',';"
   getDataFromRedshift(sql);
+
+  var s3 = S3.getInstance(accessKey, secretKey); 
+  s3.deleteObject("wisniewskikr-demo", "demo_" + index, {logRequests:true});
 
   var response = {}
 
