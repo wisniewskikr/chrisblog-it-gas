@@ -5,7 +5,7 @@ AWS TO S3 AND REDSHIFT DIALOG PACKAGES
 GSHEET URL
 ----------
 
-* **Gsheet URL**: https://docs.google.com/spreadsheets/d/11-__NDNcFvbFL5dihGNfJsRaPJQaB5eMnSVX5qo_WYA/edit?usp=sharing
+* **Gsheet URL**: https://docs.google.com/spreadsheets/d/1VCEVwtUc8ko0AV-HUgG2TvX1XMwYUWuUOjHAezYhtsw/edit?usp=sharing
 
 
 DESCRIPTION
