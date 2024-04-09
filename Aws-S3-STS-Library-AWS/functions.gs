@@ -7,9 +7,7 @@ function onOpen() {
 
 function exportS3AsCSV() {
 
-  var response = initStsAWS();
-
-  S3.init(getAccessKeyFromResponse(response), getSecretKeyFromResponse(response));  // Please set this.
+  S3.initFromSTS();  // Please set this.
   var region = getLocationAWS(); //  Please set this.
 
   var csv = SpreadsheetApp
@@ -22,13 +20,4 @@ function exportS3AsCSV() {
 
   S3.putObject("wisniewskikr-demo", blob.getName(), blob, region);
 
-}
-
-function initRedshiftAWS() {
-  Logger.log('User: %s; Function: %s', getCurrentUserEmail(), 'initRedshiftAWS()');
-  var response = initStsAWS();
-  AWS.setNewKey(
-    getAccessKeyFromResponse(response),
-    getSecretKeyFromResponse(response),
-    getSessionTokenFromResponse(response));
 }

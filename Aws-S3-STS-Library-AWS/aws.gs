@@ -1,9 +1,3 @@
-/**
- * Google Apps Script wrapper for API requests to Amazon Web Services.
- *
- * Forked from https://github.com/smithy545/aws-apps-scripts which has no
- * express license listed.
- */
 var AWS = (function() {
   // option constants
   var PARAM_BUCKET_NAME = "Bucket";
@@ -11,131 +5,122 @@ var AWS = (function() {
   // Keys cannot be retrieved once initialized but can be changed
   var accessKey;
   var secretKey;
+  var sessionToken;
 
   return {
     /**
-     * Sets keys for authentication to make requests. Keys are not externally
-     * once added.
+     * Sets up keys for authentication so you can make your requests. Keys are not gettable once added.
      * @param {string} access_key - your aws access key
      * @param {string} secret_key - your aws secret key
+     * @param {string} session_token - your aws session token
      */
-    init: function AWS(access_key, secret_key) {
-      if (access_key == undefined) {
+    init: function AWS(access_key, secret_key, session_token) {
+      if(access_key == undefined) {
         throw "Error: No access key provided";
-      }
-      if (secret_key == undefined) {
+      } else if(secret_key == undefined) {
         throw "Error: No secret key provided";
+      } else if(session_token == undefined) {
+        throw "Error: No session token provided";
       }
       accessKey = access_key;
       secretKey = secret_key;
+      sessionToken = session_token;
     },
     /**
      * Authenticates and sends the given parameters for an AWS api request.
-     * @param {string} service - AWS service (e.g. ec2, iam, codecommit)
-     * @param {string} region - AWS region (e.g. us-east-1)
-     * @param {string} action - API action to call
-     * @param {Object} params - Parameters to call on the action. Defaults to
-     *        {}.
-     * @param {string} method - HTTP method (e.g. GET, POST). Defaults to GET.
-     * @param {(string|object)} payload - Payload to send. Defults to ''.
-     * @param {Object} headers - Headers to attach to the request. Properties
-     *        'Host' and 'X-Amz-Date' are populated in this method.
-     * @param {string} uri - Path for the action. Defaults to '/'.
-     * @param {Object} opts - Additional service specific values. Defaults to
-     *        {}.
-     * @throws {Object} AWS error on failure.
-     * @return {string} AWS server response to the request.
+     * @param {string} service - the aws service to connect to (e.g. 'ec2', 'iam', 'codecommit')
+     * @param {string} region - the aws region your command will go to (e.g. 'us-east-1')
+     * @param {string} action - the api action to call
+     * @param {Object} [params] - the parameters to call on the action. Defaults to none.
+     * @param {string} [method=GET] - the http method (e.g. 'GET', 'POST'). Defaults to GET.
+     * @param {(string|object)} [payload={}] - the payload to send. Defults to ''.
+     * @param {Object} [headers={Host:..., X-Amz-Date:...}] - the headers to attach to the request. Host and X-Amz-Date are premade for you.
+     * @param {string} [uri='/'] - the path after the domain before the action. Defaults to '/'.
+     * @param {Object} [options] - additional service specific values
+     * @return {string} the server response to the request
      */
-    request: function(service, region, action, params, method, payload, headers,
-                      uri, opts) {
-      if (service == undefined) {
+    request: function(service, region, action, params, method, payload, headers, uri, options) {
+      if(service == undefined) {
         throw "Error: Service undefined";
-      }
-      if (region == undefined) {
+      } else if(region == undefined) {
         throw "Error: Region undefined";
-      }
-      if (action == undefined) {
+      } else if(action == undefined) {
         throw "Error: Action undefined";
       }
 
-      opts = opts || {};
-      var bucket = opts[PARAM_BUCKET_NAME];
+      var options = options || {};
+      var bucket = options[PARAM_BUCKET_NAME];
       if (service == "s3" && action != "ListAllMyBuckets" && bucket == undefined) {
         throw "Error: S3 Bucket undefined";
       }
 
-      var Crypto = loadCrypto();
-
-      var dateTimeString = Utilities.formatDate(new Date(), "GMT", "yyyyMMdd'T'HHmmss'Z'");
-      var dateString = dateTimeString.substring(0, 8);
-
-      method = method || "GET";
-      uri = uri || "/";
-      host = getHost(service, region, bucket);
-      headers = headers || {};
-
-      if (payload == undefined) {
+      if(payload == undefined) {
         payload = "";
-      } else if (typeof payload !== "string") {
+      } else if(typeof payload !== "string") {
         payload = JSON.stringify(payload);
       }
-      var hashedPayload = Crypto.SHA256(payload);
 
+      var Crypto = loadCrypto();
+
+      var d = new Date();
+
+      var dateStringFull =  String(d.getUTCFullYear()) + addZero(d.getUTCMonth()+1) + addZero(d.getUTCDate()) + "T" + addZero(d.getUTCHours()) + addZero(d.getUTCMinutes()) + addZero(d.getUTCSeconds()) + 'Z';
+      var dateStringShort = String(d.getUTCFullYear()) + addZero(d.getUTCMonth()+1) + addZero(d.getUTCDate());
+      var payload = payload || '';
+      var hashedPayload = Crypto.SHA256(payload);
+      var method = method || "GET";
+      var uri = uri || "/";
+      var host = getHost(service, region, bucket);
+      var headers = headers || {};
       var request;
       var query;
-      if (method.toLowerCase() == "post") {
-        request = "https://" + host + uri;
-        query = "";
+      if(method.toLowerCase() == "post") {
+        request = "https://"+host+uri;
+        query = '';
       } else {
-        query = "Action=" + action;
-        if (params) {
-          Object.keys(params)
-          .sort(function(a,b) { return (a < b ? -1 : 1); })
-          .forEach(function(name) {
-            query += "&" + name + "=" + fixedEncodeURIComponent(params[name]);
+        query = "Action="+action;
+        if(params) {
+          Object.keys(params).sort(function(a,b) { return a<b?-1:1; }).forEach(function(name) {
+            query += "&"+name+"="+fixedEncodeURIComponent(params[name]);
           });
         }
-        request = "https://" + host + uri + "?" + query;
+        request = "https://"+host+uri+"?"+query;
       }
 
       var canonQuery = getCanonQuery(query);
       var canonHeaders = "";
       var signedHeaders = "";
       headers["Host"] = host;
-      headers["X-Amz-Date"] = dateTimeString;
+      headers["X-Amz-Date"] = dateStringFull;
       headers["X-Amz-Target"] = action;
       headers["X-Amz-Content-SHA256"] = hashedPayload;
-      Object.keys(headers)
-      .sort(function(a,b) { return (a < b ? -1 : 1); })
-      .forEach(function(h, index, ordered) {
+      headers["X-Amz-Security-Token"] = sessionToken;
+      Object.keys(headers).sort(function(a,b){return a<b?-1:1;}).forEach(function(h, index, ordered) {
         canonHeaders += h.toLowerCase() + ":" + headers[h] + "\n";
         signedHeaders += h.toLowerCase() + ";";
       });
       signedHeaders = signedHeaders.substring(0, signedHeaders.length-1);
 
-      var canonicalString = method+"\n"
-      + uri + "\n"
-      + query + "\n"
-      + canonHeaders + "\n"
-      + signedHeaders + "\n"
+      var CanonicalString = method+'\n'
+      + uri+'\n'
+      + query+'\n'
+      + canonHeaders+'\n'
+      + signedHeaders+'\n'
       + hashedPayload;
-      var canonHash = Crypto.SHA256(canonicalString);
+      var canonHash = Crypto.SHA256(CanonicalString);
 
       var algorithm = "AWS4-HMAC-SHA256";
-      var scope = dateString + "/" + region + "/" + service + "/aws4_request";
+      var scope = dateStringShort + "/"+region+"/"+service+"/aws4_request";
 
-      var stringToSign = algorithm + "\n"
-      + dateTimeString + "\n"
-      + scope + "\n"
+      var StringToSign = algorithm+'\n'
+      + dateStringFull+'\n'
+      + scope+'\n'
       + canonHash;
 
-      var key = getSignatureKey(Crypto, secretKey, dateString, region, service);
-      var signature = Crypto.HMAC(Crypto.SHA256, stringToSign,
-                                  key, { asBytes: false });
+      var key = getSignatureKey(Crypto, secretKey, dateStringShort, region, service);
+      var signature = Crypto.HMAC(Crypto.SHA256, StringToSign, key, { asBytes: false });
 
-      var authHeader = algorithm + " Credential=" + accessKey + "/" + scope
-                        + ", SignedHeaders=" + signedHeaders + ", Signature="
-                        + signature;
+      var authHeader = algorithm +" Credential="+accessKey+"/"+scope+", SignedHeaders="+signedHeaders+", Signature="+signature;
 
       headers["Authorization"] = authHeader;
       delete headers["Host"];
@@ -146,21 +131,26 @@ var AWS = (function() {
         payload: payload,
       };
 
-      return handleError(UrlFetchApp.fetch(request, options));
+      var response = UrlFetchApp.fetch(request, options);
+      return response;
     },
     /**
      * Sets new authorization keys
      * @param {string} access_key - the new access_key
      * @param {string} secret_key - the new secret key
+     * @param {string} session_token - your aws session token
      */
-    setNewKey: function(access_key, secret_key) {
+    setNewKey: function(access_key, secret_key, session_token) {
       if(access_key == undefined) {
         throw "Error: No access key provided";
       } else if(secret_key == undefined) {
         throw "Error: No secret key provided";
+      } else if(session_token == undefined) {
+        throw "Error: No session token provided";
       }
       accessKey = access_key;
       secretKey = secret_key;
+      sessionToken = session_token;
     }
   };
 
@@ -195,14 +185,19 @@ var AWS = (function() {
     return /[a-z0-9-_.~=&]/i.test(c);
   }
 
+  function addZero(s) {
+    return (Number(s) < 10 ? '0' : '') + String(s);
+  }
+
   /**
    * Source: http://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html#signature-v4-examples-jscript
    */
   function getSignatureKey(Crypto, key, dateStamp, regionName, serviceName) {
-    var kDate = Crypto.HMAC(Crypto.SHA256, dateStamp, "AWS4" + key, { asBytes: true});
-    var kRegion = Crypto.HMAC(Crypto.SHA256, regionName, kDate, { asBytes: true });
-    var kService = Crypto.HMAC(Crypto.SHA256, serviceName, kRegion, { asBytes: true });
-    var kSigning = Crypto.HMAC(Crypto.SHA256, "aws4_request", kService, { asBytes: true });
+    var kDate= Crypto.HMAC(Crypto.SHA256, dateStamp, "AWS4" + key, { asBytes: true});
+    var kRegion= Crypto.HMAC(Crypto.SHA256, regionName, kDate, { asBytes: true });
+    var kService=Crypto.HMAC(Crypto.SHA256, serviceName, kRegion, { asBytes: true });
+    var kSigning= Crypto.HMAC(Crypto.SHA256, "aws4_request", kService, { asBytes: true });
+
     return kSigning;
   }
 
@@ -241,75 +236,7 @@ var AWS = (function() {
    */
   function fixedEncodeURIComponent(str) {
     return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
-      return "%" + c.charCodeAt(0).toString(16);
+      return '%' + c.charCodeAt(0).toString(16);
     });
-  }
-
-  /**
-   * Parses UrlFetchApp.fetch and throws an object based on the XML returned by
-   * AWS. Based on code from project
-   * https://github.com/eschultink/S3-for-Google-Apps-Script and used under the
-   * following license.
-   *
-   * @license Copyright 2014-15 Eng Etc LLC - All Rights Reserved
-   *
-   * LICENSE (Modified BSD) - Redistribution and use in source and binary forms,
-   * with or without modification, are permitted provided that the following
-   * conditions are met:
-   *   1) Redistributions of source code must retain the above copyright notice,
-   *      this list of conditions and the following disclaimer.
-   *   2) Redistributions in binary form must reproduce the above copyright
-   *      notice, this list of conditions and the following disclaimer in the
-   *      documentation and/or other materials provided with the distribution.
-   *   3) Neither the name of the Eng Etc LLC, S3-for-Google-Apps-Script, nor
-   *      the names of its contributors may be used to endorse or promote
-   *      products derived from this software without specific prior written
-   *      permission.
-   *
-   * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-   * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-   * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-   * ARE DISCLAIMED. IN NO EVENT SHALL ENG ETC LLC BE LIABLE FOR ANY DIRECT,
-   * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-   * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-   * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-   * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-   * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-   * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-   * SUCH DAMAGE.
-   *
-   * @param {Object} response result of UrlFetchApp.fetch() call
-   * @throws {Object} AWS error on failure
-   * @return {Object} the original parameter, unchanged
-   */
-  function handleError(response) {
-    if (response.getResponseCode() >= 300) {
-      var error = {};
-      error.name = "AwsError";
-
-      try {
-        // traverse XML document and add nodes to error object
-        var elements = XmlService
-          .parse(response.getContentText())
-          .getRootElement()
-          .getChildren();
-        for (i in elements) {
-          var name = elements[i].getName();
-          name = name.charAt(0).toLowerCase() + name.slice(1);
-          error[name] = elements[i].getText();
-        }
-        error.toString = function() {
-          return "AWS Error - " + this.code + ": " + this.message;
-        };
-      } catch (e) {
-        // failed to parse content as XML
-        error.message = "AWS returned HTTP code " + response.getResponseCode()
-                      + ", but error content could not be parsed."
-        error.toString = function () { return this.message; };
-      }
-
-      throw error;
-    }
-    return response;
   }
 })();

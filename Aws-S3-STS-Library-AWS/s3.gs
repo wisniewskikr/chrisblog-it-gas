@@ -15,6 +15,14 @@ var S3 = (function() {
     init: function S3(accessKey, secretKey) {
       AWS.init(accessKey, secretKey);
     },
+    initFromSTS: function S3() {
+      var response = initStsAWS();
+      AWS.setNewKey(
+        getAccessKeyFromResponse(response),
+        getSecretKeyFromResponse(response),
+        getSessionTokenFromResponse(response)
+      );
+    },
     /**
      * Container for information related to the list of buckets.
      * @typedef {Object} BucketList
