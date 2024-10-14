@@ -1,23 +1,24 @@
-function onOpen() {
-  var ui = SpreadsheetApp.getUi();
-  ui.createMenu('Functions')
-    .addItem('Redshift Data', 'myFunction')    
-    .addToUi();
-}
-
-function myFunction() {
-
-  var sql = "select * from GREETINGS";
-  var recordArray = getDataFromRedshift(sql);
-  fillGsheet(recordArray);
-
-}
+const SQL = "sql";
+const DATA = "data";
+const STAT_RESULT = "sr";
 
 function initAWS() {
   AWS.init(accessKey, secretKey);
 }
 
+function runSqlOnRedshift(sql) {
+  handleRedshift(sql, SQL);
+}
+
+function getStatementResultFromRedshift(sql) {
+  return handleRedshift(sql, STAT_RESULT);
+}
+
 function getDataFromRedshift(sql) {
+  return handleRedshift(sql, DATA);
+}
+
+function handleRedshift(sql, type) {
 
   initAWS();
   
@@ -31,7 +32,9 @@ function getDataFromRedshift(sql) {
     }
   } while (describeStatement.Status !== "FINISHED");
     
-  return getRecordArray(executeStatement);
+  if (type == STAT_RESULT || type == DATA) {    
+    return getRecordArray(executeStatement, type);
+  }  
 
 }
 
@@ -82,7 +85,7 @@ function runDescribeStatement(id) {
   
 }
 
-function getRecordArray(executeStatement) {
+function getRecordArray(executeStatement, type) {
 
   var recordArray = [];
   var nextToken = null;
@@ -92,9 +95,15 @@ function getRecordArray(executeStatement) {
     recordArray.push(statementResult.Records);
     nextToken = statementResult.NextToken;
     Logger.log("Get Statement Result. Next Token: " + nextToken);    
-  } while (statementResult.NextToken);  
+  } while (statementResult.NextToken);
 
-  return recordArray;
+  if (type == DATA) {
+    return recordArray;
+  }  else if (type == STAT_RESULT) {
+    return statementResult;
+  }
+
+  
 
 }
 
@@ -120,90 +129,16 @@ function runGetStatementResult(id, nextToken) {
 
 }
 
-function fillGsheet(recordArray) {  
-  
-  var rowIndex = 1;
-  for (var i = 0; i < recordArray.length; i++) {   
-        
-    var rows = recordArray[i];
-    for (var j = 0; j < rows.length; j++) {
-      var columns = rows[j];
-      rowIndex++;
-      var columnIndex = 'A';
-      
-      for (var k = 0; k < columns.length; k++) {
-        
-        var field = columns[k];        
-        var value = getFieldValue(field);
-        var range = columnIndex + rowIndex;
-        addToCell(range, value);
+function getColumnFromStatementResult(statementResult) {
 
-        columnIndex = nextChar(columnIndex);
+  var columns = [];
 
-      }
+  var columnMetadata = statementResult.ColumnMetadata;
 
-    }
-
+  for (var i = 0; i < columnMetadata.length; i++) {
+    columns.push(columnMetadata[i].name);
   }
 
-}
+  return columns;
 
-function getFieldValue(field) {
-
-  if (field.isNull != null) {
-    return null;
-  }
-
-  if (field.stringValue != null) {
-    return field.stringValue;
-  }
-
-  if (field.longValue != null) {
-    return field.longValue;
-  }
-
-  if (field.doubleValue != null) {
-    return null;
-  }
-
-  if (field.booleanValue != null) {
-    return field.booleanValue;
-  }
-
-  if (field.blobValue != null) {
-    return field.blobValue;
-  }
-
-  Logger.log("Can not find value for following field: " + JSON.stringify(field));
-  return null;
-
-}
-
-function nextChar(c) {
-    var column = letterToColumn(c);
-    column++;
-    return columnToLetter(column);
-}
-
- function addToCell(range, value) {
-  var spreadsheet = SpreadsheetApp.getActive();
-  spreadsheet.getRange(range).setValue(value);  
-}
-
-function columnToLetter(column) {
-  var temp, letter = '';
-  while (column > 0) {
-    temp = (column - 1) % 26;
-    letter = String.fromCharCode(temp + 65) + letter;
-    column = (column - temp - 1) / 26;
-  }
-  return letter;
-}
-
-function letterToColumn(letter) {
-  var column = 0, length = letter.length;
-  for (var i = 0; i < length; i++) {
-    column += (letter.charCodeAt(i) - 64) * Math.pow(26, length - i - 1);
-  }
-  return column;
 }

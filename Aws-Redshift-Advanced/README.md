@@ -31,34 +31,15 @@ This project requires following preconditions:
 * **Nubmer of nodes**: 1
 * **Database encryption**: choose "Disable cluster encryption"
 * **Cluster permissions**: click the button "Associate IAM roles" and then choose "demo-redshift-role"
-1. Create table and fill it with data
-Following SQL query should be run there:
-```
-CREATE TABLE "public"."greetings"("id" INTEGER NULL, "message" VARCHAR NULL) ENCODE AUTO;
-INSERT INTO "public"."greetings" ("id", "message") values (1, 'Hello World');
-SELECT * FROM "public"."greetings";
-```
 
 
 DESCRIPTION
 -----------
 
 ##### Goal
-The goal of this project is to show how to connect Gsheet with AWS Redshifd and run some execute statement (SQL).
-
-##### Result 
-When user click on menu: "Functions -> Redshift Data" then data should be taken form Redshift and display in Gsheet.
-
-
-IMPLEMENTATION
------------
-
-Implementation details:
-* In file "configuration.gs" is all configuration to AWS Redshift;
-* In file "aws.gs" are all functions connected with AWS;
-* In file "functions.gs" create all functions;
-* In AWS Redshift has to be created new cluster;
-* In AWS IAM has to be created new user with roles "AmazonRedshiftFullAccess" and "AmazonRedshiftDataFullAccess". 
+The goal of this project is to show how to implement following functionalities:
+* **Export**: export data from Google Gsheet to AWS Redshift
+* **Import**: import data from AWS Redshift to Google Gsheet
   
 
 LAUNCH
@@ -66,5 +47,6 @@ LAUNCH
 
 To launch project please:
 * Open Gsheet;
-* Choose "Functions -> Redshift Data";
-* (Optional) Sometimes you will be asked to confirm permissions.
+* Prepare data to export: first row should contain column's names and other rows should contain data
+* Choose "Functions -> Export" for export data
+* Choose "Functions -> Import" for import data
