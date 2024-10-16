@@ -50,7 +50,8 @@ function runExecuteStatement(sql) {
           "ClusterIdentifier": clusterIdentifierReshift, 
           "Database": defaultDatabaseRedshift,                     
           "DbUser": dbUserRedshift,
-          "Sql": sql
+          "Sql": sql,
+          "SessionKeepAliveSeconds": 10
         },
         headers={
           "X-Amz-Target": "RedshiftData.ExecuteStatement", 

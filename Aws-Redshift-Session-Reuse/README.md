@@ -37,7 +37,7 @@ DESCRIPTION
 -----------
 
 ##### Goal
-The goal of this project is to show how to implement following functionalities:
+The goal of this project is to show how to implement session reuse in AWS Redshift API. Session reuse means that session is not closed and can be reused again. It should increase performance. Application contains following functionalities:
 * **Export**: export data from Google Gsheet to AWS Redshift
 * **Import**: import data from AWS Redshift to Google Gsheet
   
