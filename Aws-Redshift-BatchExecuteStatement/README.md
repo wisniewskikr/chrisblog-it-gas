@@ -33,8 +33,8 @@ This project requires following preconditions:
 * **Cluster permissions**: click the button "Associate IAM roles" and then choose "demo-redshift-role"
 * **SQL Queries**: Following SQL query should be run in database:
 ```
-create table greetings (id int, message varchar);
-insert into greetings (id, message) values (1, 'Hello World');
+CREATE TABLE "public"."greetings"("id" INTEGER NULL, "message" VARCHAR NULL) ENCODE AUTO;
+INSERT INTO "public"."greetings" ("id", "message") values (1, 'Hello World');
 ```
 
 
