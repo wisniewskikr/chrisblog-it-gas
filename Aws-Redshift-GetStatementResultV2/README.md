@@ -42,7 +42,9 @@ DESCRIPTION
 -----------
 
 ##### Goal
-The goal of this project is to show how to connect Gsheet with AWS Redshifd and run some execute statement (SQL).
+The goal of this project is to present how to use GetStatementResultV2. Version 2 enables receiving data as CSV file, not as JSON file. To do it:
+* In **ExecuteStatement** you have to add following property: **"ResultFormat": "CSV"**
+* In **GetStatementResult** you have to use **GetStatementResultV2**.
 
 ##### Result 
 When user click on menu: "Functions -> Redshift Data" then data should be taken form Redshift and display in Gsheet.
