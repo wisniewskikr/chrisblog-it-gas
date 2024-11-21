@@ -12,12 +12,26 @@ PRECONDITIONS
 -------------
 
 This project requires following preconditions:
-* IAM role "demo-redshift-role" should be created. It should have following "permissions policies":
-  * AmazonRedshiftFullAccess
-* IAM user "demo-redshift-user" should be created. It should have following "permissions policies":
-  * AmazonRedshiftFullAccess
-* Cluster "redshift-cluster-1" with dbuser "awsuser" and default database "dev" should be created in AWS Redshift. It should use above created role. 
-Following SQL query should be run there:
+1. IAM role should be created:
+* **Select trusted entity**: AWS Service -> Redshift -> Redshift Customizable
+* **Add permissions**: AmazonRedshiftFullAccess
+* **Name, review and create**: demo-redshift-role
+1. IAM user should be created:
+* **Specify user details**: "User name" should be "demo-redshift-user"
+* **Set permissions**: Attach policies directly -> AmazonRedshiftFullAccess
+* **Review and create**: click the button "Create user"
+1. Generate access key for IAM user:
+* **Choose user**: click the link "demo-redshift-user"
+* **Create access key**: Security credentials -> Access keys -> Create access key 
+* **Access key best practices & alternatives**: choose "Application running outside AWS"
+* **Set description tag**: N/A
+* **Retrieve access keys**: click the button "Download .csv file"
+1. Create AWS Redshift Cluster
+* **Node type**: choose "ra3.large"
+* **Nubmer of nodes**: 1
+* **Database encryption**: choose "Disable cluster encryption"
+* **Cluster permissions**: click the button "Associate IAM roles" and then choose "demo-redshift-role"
+* **SQL Queries**: Following SQL query should be run in database:
 ```
 create table greetings (id int, message varchar);
 insert into greetings (id, message) values (1, 'Hello World');

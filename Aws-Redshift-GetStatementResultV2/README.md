@@ -1,11 +1,11 @@
-AWS REDSHIFT BATCH EXECUTE STATEMENT
-=====================================
+AWS REDSHIFT EXECUTE STATEMENT
+===============================
 
 
 GSHEET URL
 ----------
 
-* **Gsheet URL**: https://docs.google.com/spreadsheets/d/1XdfZjrRMHPio64bRhlT4rxf0kVOVgiJsDY7VEKZsH0E/edit#gid=0
+* **Gsheet URL**: https://docs.google.com/spreadsheets/d/1WXh3vW3bwg0zxj1P0-tqcM-SOS1txOXNXCP2mJN8Tbo/edit?usp=sharing
 
 
 PRECONDITIONS
@@ -42,7 +42,7 @@ DESCRIPTION
 -----------
 
 ##### Goal
-The goal of this project is to show how to connect Gsheet with AWS Redshifd and run some batch execute statement. Batch execute statement enables to run many sql queries at the same time.
+The goal of this project is to show how to connect Gsheet with AWS Redshifd and run some execute statement (SQL).
 
 ##### Result 
 When user click on menu: "Functions -> Redshift Data" then data should be taken form Redshift and display in Gsheet.
