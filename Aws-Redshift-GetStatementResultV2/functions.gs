@@ -47,7 +47,8 @@ function runExecuteStatement(sql) {
           "ClusterIdentifier": clusterIdentifierReshift, 
           "Database": defaultDatabaseRedshift,                     
           "DbUser": dbUserRedshift,
-          "Sql": sql
+          "Sql": sql,
+          "ResultFormat": "CSV"
         },
         headers={
           "X-Amz-Target": "RedshiftData.ExecuteStatement", 
@@ -88,7 +89,7 @@ function getRecordArray(executeStatement) {
   var nextToken = null;
   var statementResult = null;
   do {
-    statementResult = runGetStatementResult(executeStatement.Id, nextToken);    
+    statementResult = runGetStatementResultV2(executeStatement.Id, nextToken);    
     recordArray.push(statementResult.Records);
     nextToken = statementResult.NextToken;
     Logger.log("Get Statement Result. Next Token: " + nextToken);    
@@ -98,11 +99,11 @@ function getRecordArray(executeStatement) {
 
 }
 
-function runGetStatementResult(id, nextToken) {
+function runGetStatementResultV2(id, nextToken) {
   var resultJson = AWS.request(
       typeAWS, 
       locationAWS,
-      'RedshiftData.GetStatementResult', 
+      'RedshiftData.GetStatementResultV2', 
       {"Version": versionAWS},
       method='POST',
       payload={
@@ -110,100 +111,30 @@ function runGetStatementResult(id, nextToken) {
         "NextToken" : nextToken
       },
       headers={
-        "X-Amz-Target": "RedshiftData.GetStatementResult", 
+        "X-Amz-Target": "RedshiftData.GetStatementResultV2", 
         "Content-Type": "application/x-amz-json-1.1"
       }
   )
-
+  
   Logger.log("Get Statement Result result: " + resultJson);
   return JSON.parse(resultJson.getContentText());
 
 }
 
 function fillGsheet(recordArray) {  
-  
-  var rowIndex = 1;
+
   for (var i = 0; i < recordArray.length; i++) {   
         
     var rows = recordArray[i];
     for (var j = 0; j < rows.length; j++) {
-      var columns = rows[j];
-      rowIndex++;
-      var columnIndex = 'A';
-      
-      for (var k = 0; k < columns.length; k++) {
-        
-        var field = columns[k];        
-        var value = getFieldValue(field);
-        var range = columnIndex + rowIndex;
-        addToCell(range, value);
 
-        columnIndex = nextChar(columnIndex);
+      const csv = rows[j].CSVRecords;
+      const csvData = Utilities.parseCsv(csv);
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+      sheet.getRange(1, 1, csvData.length, csvData[0].length).setValues(csvData);
 
-      }
-
-    }
+    }    
 
   }
 
-}
-
-function getFieldValue(field) {
-
-  if (field.isNull != null) {
-    return null;
-  }
-
-  if (field.stringValue != null) {
-    return field.stringValue;
-  }
-
-  if (field.longValue != null) {
-    return field.longValue;
-  }
-
-  if (field.doubleValue != null) {
-    return null;
-  }
-
-  if (field.booleanValue != null) {
-    return field.booleanValue;
-  }
-
-  if (field.blobValue != null) {
-    return field.blobValue;
-  }
-
-  Logger.log("Can not find value for following field: " + JSON.stringify(field));
-  return null;
-
-}
-
-function nextChar(c) {
-    var column = letterToColumn(c);
-    column++;
-    return columnToLetter(column);
-}
-
- function addToCell(range, value) {
-  var spreadsheet = SpreadsheetApp.getActive();
-  spreadsheet.getRange(range).setValue(value);  
-}
-
-function columnToLetter(column) {
-  var temp, letter = '';
-  while (column > 0) {
-    temp = (column - 1) % 26;
-    letter = String.fromCharCode(temp + 65) + letter;
-    column = (column - temp - 1) / 26;
-  }
-  return letter;
-}
-
-function letterToColumn(letter) {
-  var column = 0, length = letter.length;
-  for (var i = 0; i < length; i++) {
-    column += (letter.charCodeAt(i) - 64) * Math.pow(26, length - i - 1);
-  }
-  return column;
 }
