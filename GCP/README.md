@@ -13,6 +13,11 @@ DESCRIPTION
 
 The goal this project is to present how to connect application in **Google Apps Script** with **Google Cloud Platform (GCP)**.
 
+Useful links:
+* https://console.cloud.google.com/
+* https://groups.google.com/g/groups-groupsapp
+* https://myaccount.google.com/connections
+
 
 CONFIGURATION - CREATE GCP PROJECT
 ----------------------------------
