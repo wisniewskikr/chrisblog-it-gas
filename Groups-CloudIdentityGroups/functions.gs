@@ -6,28 +6,34 @@ function onOpen() {
 }
 
 function displayGropus() {
+  var email = Session.getActiveUser().getEmail();
+  const memberships = getGroupsForUser(email);
+  const ids = memberships.map(item => item.groupKey.id);
 
   var spreadsheet = SpreadsheetApp.getActive();
   var sheet = spreadsheet.getActiveSheet();
-  sheet.getRange('A1').setValue('Your Gropus'); 
+  sheet.getRange('A1').setValue('Your Gropus');
+  
+  var values = ids.map(function(id) { return [id]; });
+  sheet.getRange(2, 1, values.length, 1).setValues(values);
+}
 
-  var groupsArray = [];
-  var groups = GroupsApp.getGroups();
-  for(var group of groups) {
+const groups = CloudIdentityGroups.Groups;
 
-    Logger.log("***** Group Email: " + group.getEmail());
-    groupsArray.push(group.getEmail());
+function getGroupsForUser(userEmail) {
+  const memberships = [];
+  let pageToken;
 
-  }
+  do {
+    const response = groups.Memberships.searchDirectGroups('groups/-', {
+      query: `member_key_id=='${userEmail}'`,
+      pageToken: pageToken,
+    });
+    if (response.memberships) {
+      memberships.push(...response.memberships);
+    }
+    pageToken = response.nextPageToken;
+  } while (pageToken);
 
-  // Convert array to 2D array required by setValues()
-  var data = groupsArray.map(function(item) {
-    return [item];
-  });
-
-  if (groupsArray.length != 0) {
-    // Set values starting from cell A2
-    sheet.getRange(2, 1, data.length, 1).setValues(data);
-  }
-
+  return memberships;  // Each membership contains group info
 }

@@ -12,4 +12,4 @@ DESCRIPTION
 -----------
 
 ##### Goal
-The goal of this project is to show how display in Gsheet all groups of current user using GroupaApp API.
+The goal of this project is to show how display in Gsheet all groups of current user using Cloud Identity Groups API.
