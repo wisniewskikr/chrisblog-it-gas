@@ -37,3 +37,12 @@ function getGroupsForUser(userEmail) {
 
   return memberships;  // Each membership contains group info
 }
+
+---
+
+ignore-exceptions:
+  - org.springframework.web.client.HttpClientErrorException$BadRequest
+  
+logging:
+  level:
+    io.github.resilience4j: DEBUG

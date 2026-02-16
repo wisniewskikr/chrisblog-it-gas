@@ -18,7 +18,7 @@ This project requires following preconditions:
 * **Name, review and create**: demo-redshift-role
 1. IAM user should be created:
 * **Specify user details**: "User name" should be "demo-redshift-user"
-* **Set permissions**: Attach policies directly -> AmazonRedshiftFullAccess
+* **Set permissions**: Attach policies directly -> AmazonRedshiftFullAccess and AmazonRedshiftDataFullAccess
 * **Review and create**: click the button "Create user"
 1. Generate access key for IAM user:
 * **Choose user**: click the link "demo-redshift-user"
